@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 240" role="img" aria-label="unkaiのアーキテクチャ図">
+  <title>unkaiのアーキテクチャ</title>
+  <style>
+    .box { fill: none; stroke: #8b949e; stroke-width: 1.5; }
+    .accent-box { fill: none; stroke: #58a6ff; stroke-width: 1.5; }
+    .label { font: 600 14px 'Hiragino Sans', 'Noto Sans JP', sans-serif; fill: #57606a; }
+    .small { font: 400 11.5px 'Hiragino Sans', 'Noto Sans JP', sans-serif; fill: #57606a; }
+    .accent-label { font: 700 14px 'Hiragino Sans', 'Noto Sans JP', sans-serif; fill: #2f7fd0; }
+    .arrow { stroke: #8b949e; stroke-width: 1.5; fill: none; marker-end: url(#head); }
+  </style>
+  <defs>
+    <marker id="head" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8z" fill="#8b949e"/>
+    </marker>
+  </defs>
+
+  <rect x="20" y="90" width="150" height="76" rx="8" class="box"/>
+  <text x="40" y="118" class="label">catalog</text>
+  <text x="40" y="140" class="small">サービス定義</text>
+  <text x="40" y="156" class="small">設定項目スキーマ</text>
+
+  <rect x="240" y="90" width="160" height="76" rx="8" class="accent-box"/>
+  <text x="260" y="118" class="accent-label">Store</text>
+  <text x="260" y="140" class="small">図の状態 + 選択</text>
+  <text x="260" y="156" class="small">localStorage 保存</text>
+
+  <rect x="470" y="20" width="150" height="64" rx="8" class="box"/>
+  <text x="490" y="46" class="label">Palette</text>
+  <text x="490" y="68" class="small">配置</text>
+
+  <rect x="470" y="98" width="150" height="64" rx="8" class="box"/>
+  <text x="490" y="124" class="label">Canvas(SVG)</text>
+  <text x="490" y="146" class="small">ドラッグ・接続・ズーム</text>
+
+  <rect x="470" y="176" width="150" height="56" rx="8" class="box"/>
+  <text x="490" y="202" class="label">Inspector</text>
+  <text x="490" y="222" class="small">設定編集</text>
+
+  <rect x="680" y="90" width="140" height="76" rx="8" class="box"/>
+  <text x="700" y="118" class="label">model</text>
+  <text x="700" y="140" class="small">ノード・辺</text>
+  <text x="700" y="156" class="small">直列化・検証</text>
+
+  <path class="arrow" d="M170 128 H232"/>
+  <path class="arrow" d="M400 120 C430 110 440 56 462 52"/>
+  <path class="arrow" d="M400 128 H462"/>
+  <path class="arrow" d="M400 136 C430 150 440 200 462 204"/>
+  <path class="arrow" d="M620 130 H678"/>
+</svg>
