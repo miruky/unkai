@@ -29,6 +29,9 @@ export class Canvas {
   private nodeLayer = svgEl('g');
   private overlay = svgEl('g');
   private drag: Drag = { mode: 'none' };
+  // 直前の描画に存在したid。差分で新規ノード・辺だけ入場アニメーションを当てる。
+  private seenNodes = new Set<string>();
+  private seenEdges = new Set<string>();
 
   constructor(private readonly store: Store) {
     const defs = svgEl('defs');
@@ -158,63 +161,89 @@ export class Canvas {
   private renderEdges(): void {
     this.edgeLayer.replaceChildren();
     const byId = new Map(this.store.diagram.nodes.map((n) => [n.id, n]));
+    const current = new Set<string>();
     for (const edge of this.store.diagram.edges) {
       const from = byId.get(edge.from);
       const to = byId.get(edge.to);
       if (!from || !to) continue;
+      current.add(edge.id);
       const d = edgePath(outputPort(from), inputPort(to));
       const selected = this.store.selection.kind === 'edge' && this.store.selection.id === edge.id;
       const hit = svgEl('path', { d, class: 'edge-hit', 'data-edge-id': edge.id });
+      const classes = ['edge'];
+      if (selected) classes.push('selected');
+      const isNew = !this.seenEdges.has(edge.id);
+      if (isNew) classes.push('edge-enter');
       const line = svgEl('path', {
         d,
-        class: selected ? 'edge selected' : 'edge',
+        class: classes.join(' '),
         'marker-end': 'url(#arrow)',
         'data-edge-id': edge.id,
       });
+      if (isNew) {
+        // 描き込みアニメーション後は破線指定を外し、長い辺でも実線で残るようにする
+        line.addEventListener(
+          'animationend',
+          () => {
+            line.classList.remove('edge-enter');
+            line.style.strokeDasharray = '';
+          },
+          { once: true },
+        );
+      }
       this.edgeLayer.append(hit, line);
     }
+    this.seenEdges = current;
   }
 
   private renderNodes(): void {
     this.nodeLayer.replaceChildren();
+    const current = new Set<string>();
+    let newIndex = 0;
     for (const node of this.store.diagram.nodes) {
-      this.nodeLayer.appendChild(this.renderNode(node));
+      current.add(node.id);
+      const enterIndex = this.seenNodes.has(node.id) ? -1 : newIndex++;
+      this.nodeLayer.appendChild(this.renderNode(node, enterIndex));
     }
+    this.seenNodes = current;
   }
 
-  private renderNode(node: DiagramNode): SVGElement {
+  // enterIndex >= 0 のとき入場アニメーションを当てる(複数同時追加はスタッガ)。
+  private renderNode(node: DiagramNode, enterIndex: number): SVGElement {
     const def = serviceById(node.serviceId);
     const provider = def ? PROVIDERS[def.provider] : { color: '#888', label: '' };
-    const g = svgEl('g', {
-      class: 'node-group',
-      transform: `translate(${node.x} ${node.y})`,
-      'data-node-id': node.id,
-    });
+    const g = svgEl('g', { transform: `translate(${node.x} ${node.y})`, 'data-node-id': node.id });
+    const inner = svgEl('g', { class: 'node-group' });
+    if (enterIndex >= 0) {
+      inner.classList.add('node-enter');
+      inner.style.animationDelay = `${Math.min(enterIndex, 12) * 40}ms`;
+    }
     const selected = this.store.selection.kind === 'node' && this.store.selection.id === node.id;
 
-    g.appendChild(svgEl('rect', { class: selected ? 'node selected' : 'node', width: NODE_W, height: NODE_H, rx: 9 }));
-    g.appendChild(svgEl('rect', { class: 'node-stripe', width: 6, height: NODE_H, rx: 3, fill: provider.color }));
+    inner.appendChild(svgEl('rect', { class: selected ? 'node selected' : 'node', width: NODE_W, height: NODE_H, rx: 9 }));
+    inner.appendChild(svgEl('rect', { class: 'node-stripe', width: 6, height: NODE_H, rx: 3, fill: provider.color }));
 
     const icon = svgEl('g', { class: 'node-icon', transform: 'translate(14 10) scale(0.9)' });
     icon.innerHTML = def ? CATEGORY_ICON[def.category] : '';
-    g.appendChild(icon);
+    inner.appendChild(icon);
 
     const abbr = svgEl('text', { class: 'node-abbr', x: NODE_W - 12, y: 22 });
     abbr.textContent = def?.abbr ?? '?';
-    g.appendChild(abbr);
+    inner.appendChild(abbr);
 
     const label = svgEl('text', { class: 'node-label', x: 16, y: NODE_H - 22 });
     label.textContent = node.label;
-    g.appendChild(label);
+    inner.appendChild(label);
 
     const sub = svgEl('text', { class: 'node-sub', x: 16, y: NODE_H - 9 });
     sub.textContent = provider.label;
-    g.appendChild(sub);
+    inner.appendChild(sub);
 
     const inP = inputPort({ ...node, x: 0, y: 0 });
     const outP = outputPort({ ...node, x: 0, y: 0 });
-    g.appendChild(svgEl('circle', { class: 'port port-in', cx: inP.x, cy: inP.y, r: 6, 'data-port': 'in', 'data-node': node.id }));
-    g.appendChild(svgEl('circle', { class: 'port port-out', cx: outP.x, cy: outP.y, r: 6, 'data-port': 'out', 'data-node': node.id }));
+    inner.appendChild(svgEl('circle', { class: 'port port-in', cx: inP.x, cy: inP.y, r: 6, 'data-port': 'in', 'data-node': node.id }));
+    inner.appendChild(svgEl('circle', { class: 'port port-out', cx: outP.x, cy: outP.y, r: 6, 'data-port': 'out', 'data-node': node.id }));
+    g.appendChild(inner);
     return g;
   }
 
