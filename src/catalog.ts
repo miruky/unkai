@@ -289,6 +289,139 @@ export const SERVICES: ServiceDef[] = [
       { key: 'waf', label: 'WAF', type: 'boolean', default: true },
     ],
   },
+  // 追加サービス(カバレッジ拡充。分析・セキュリティのカテゴリもここで埋める)
+  {
+    id: 'aws.ecs',
+    provider: 'aws',
+    category: 'compute',
+    name: 'ECS',
+    abbr: 'ECS',
+    fields: [
+      { key: 'launchType', label: '起動タイプ', type: 'select', default: 'fargate', options: ['fargate', 'ec2'] },
+      { key: 'cpu', label: 'タスクCPU', type: 'select', default: '512', options: ['256', '512', '1024', '2048'] },
+      { key: 'desiredCount', label: '希望タスク数', type: 'number', default: 2 },
+    ],
+  },
+  {
+    id: 'aws.efs',
+    provider: 'aws',
+    category: 'storage',
+    name: 'EFS',
+    abbr: 'EFS',
+    fields: [
+      { key: 'throughputMode', label: 'スループットモード', type: 'select', default: 'bursting', options: ['bursting', 'elastic', 'provisioned'] },
+      { key: 'encrypted', label: '暗号化', type: 'boolean', default: true },
+    ],
+  },
+  {
+    id: 'aws.eventbridge',
+    provider: 'aws',
+    category: 'messaging',
+    name: 'EventBridge',
+    abbr: 'EB',
+    fields: [
+      { key: 'bus', label: 'イベントバス', type: 'select', default: 'default', options: ['default', 'custom'] },
+      { key: 'archive', label: 'アーカイブ', type: 'boolean', default: false },
+    ],
+  },
+  {
+    id: 'aws.kinesis',
+    provider: 'aws',
+    category: 'analytics',
+    name: 'Kinesis Data Streams',
+    abbr: 'KDS',
+    fields: [
+      { key: 'mode', label: 'キャパシティモード', type: 'select', default: 'on-demand', options: ['on-demand', 'provisioned'] },
+      { key: 'shards', label: 'シャード数', type: 'number', default: 1 },
+    ],
+  },
+  {
+    id: 'aws.cognito',
+    provider: 'aws',
+    category: 'security',
+    name: 'Cognito',
+    abbr: 'Cog',
+    fields: [
+      { key: 'mfa', label: 'MFA', type: 'select', default: 'optional', options: ['off', 'optional', 'required'] },
+      { key: 'social', label: 'ソーシャルログイン', type: 'boolean', default: false },
+    ],
+  },
+  {
+    id: 'gcp.cloudsql',
+    provider: 'gcp',
+    category: 'database',
+    name: 'Cloud SQL',
+    abbr: 'SQL',
+    fields: [
+      { key: 'engine', label: 'エンジン', type: 'select', default: 'postgres', options: ['postgres', 'mysql', 'sqlserver'] },
+      { key: 'tier', label: 'マシンタイプ', type: 'select', default: 'db-f1-micro', options: ['db-f1-micro', 'db-g1-small', 'db-custom-2-7680'] },
+      { key: 'ha', label: '高可用性', type: 'boolean', default: false },
+    ],
+  },
+  {
+    id: 'gcp.secretmanager',
+    provider: 'gcp',
+    category: 'security',
+    name: 'Secret Manager',
+    abbr: 'SM',
+    fields: [
+      { key: 'replication', label: 'レプリケーション', type: 'select', default: 'automatic', options: ['automatic', 'user-managed'] },
+    ],
+  },
+  {
+    id: 'gcp.dataflow',
+    provider: 'gcp',
+    category: 'analytics',
+    name: 'Dataflow',
+    abbr: 'DF',
+    fields: [
+      { key: 'mode', label: 'モード', type: 'select', default: 'streaming', options: ['batch', 'streaming'] },
+      { key: 'maxWorkers', label: '最大ワーカー', type: 'number', default: 5 },
+    ],
+  },
+  {
+    id: 'azure.aks',
+    provider: 'azure',
+    category: 'compute',
+    name: 'AKS',
+    abbr: 'AKS',
+    fields: [
+      { key: 'tier', label: 'レベル', type: 'select', default: 'free', options: ['free', 'standard'] },
+      { key: 'nodeCount', label: 'ノード数', type: 'number', default: 3 },
+    ],
+  },
+  {
+    id: 'azure.sqldb',
+    provider: 'azure',
+    category: 'database',
+    name: 'SQL Database',
+    abbr: 'SQL',
+    fields: [
+      { key: 'tier', label: '価格帯', type: 'select', default: 'GeneralPurpose', options: ['Basic', 'GeneralPurpose', 'BusinessCritical'] },
+      { key: 'zoneRedundant', label: 'ゾーン冗長', type: 'boolean', default: false },
+    ],
+  },
+  {
+    id: 'azure.keyvault',
+    provider: 'azure',
+    category: 'security',
+    name: 'Key Vault',
+    abbr: 'KV',
+    fields: [
+      { key: 'sku', label: 'SKU', type: 'select', default: 'standard', options: ['standard', 'premium'] },
+      { key: 'softDelete', label: '論理削除', type: 'boolean', default: true },
+    ],
+  },
+  {
+    id: 'azure.synapse',
+    provider: 'azure',
+    category: 'analytics',
+    name: 'Synapse Analytics',
+    abbr: 'Syn',
+    fields: [
+      { key: 'dwu', label: 'DWU', type: 'select', default: 'DW100c', options: ['DW100c', 'DW200c', 'DW500c'] },
+    ],
+  },
 ];
 
 const BY_ID = new Map(SERVICES.map((s) => [s.id, s]));
@@ -301,4 +434,15 @@ export function defaultConfig(def: ServiceDef): Record<string, string | number |
   const config: Record<string, string | number | boolean> = {};
   for (const field of def.fields) config[field.key] = field.default;
   return config;
+}
+
+// 名前・略号・id・カテゴリ名・プロバイダ名のいずれかに含まれるかで絞り込む。
+export function filterServices(query: string): ServiceDef[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return SERVICES;
+  return SERVICES.filter((s) => {
+    const hay =
+      `${s.name} ${s.abbr} ${s.id} ${CATEGORY_LABEL[s.category]} ${PROVIDERS[s.provider].label}`.toLowerCase();
+    return hay.includes(q);
+  });
 }
