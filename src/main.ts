@@ -3,13 +3,27 @@ import { Canvas } from './canvas';
 import { Inspector } from './inspector';
 import { NODE_H, NODE_W } from './geometry';
 import { Palette } from './palette';
+import { diagramFromHash } from './share';
 import { Store } from './store';
+import { toast } from './toast';
 import { Toolbar } from './toolbar';
 
 const app = document.getElementById('app');
 if (!app) throw new Error('#app が見つからない');
 
 const store = new Store();
+
+// 共有リンクで開かれたら、ハッシュの図を取り込んでからアドレスを元に戻す。
+try {
+  const shared = diagramFromHash(location.hash);
+  if (shared) {
+    store.replace(shared);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+} catch {
+  toast('共有リンクの図を読み込めませんでした。', 'error');
+}
+
 const canvas = new Canvas(store);
 
 const palette = new Palette((serviceId) => {
@@ -32,13 +46,45 @@ layout.append(palette.root, canvasHost, inspector.root);
 app.append(toolbar.root, layout);
 canvas.mount(canvasHost);
 
-// 選択中の要素を Delete / Backspace で削除する。入力中は無視する。
+// キーボード操作。入力欄にフォーカスがあるときはブラウザ標準に譲る。
 window.addEventListener('keydown', (ev) => {
-  if (ev.key !== 'Delete' && ev.key !== 'Backspace') return;
-  const tag = (ev.target as HTMLElement).tagName;
-  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-  if (store.selection.kind !== 'none') {
+  const target = ev.target as HTMLElement;
+  const typing =
+    target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA';
+
+  if (typing) {
+    // 編集中の Escape は入力欄から抜ける。それ以外は標準の挙動(テキストのundo等)に任せる。
+    if (ev.key === 'Escape') target.blur();
+    return;
+  }
+
+  const mod = ev.metaKey || ev.ctrlKey;
+  if (mod && (ev.key === 'z' || ev.key === 'Z')) {
     ev.preventDefault();
-    store.deleteSelected();
+    if (ev.shiftKey) store.redo();
+    else store.undo();
+    return;
+  }
+  if (mod && (ev.key === 'y' || ev.key === 'Y')) {
+    ev.preventDefault();
+    store.redo();
+    return;
+  }
+  if (mod && (ev.key === 'd' || ev.key === 'D')) {
+    if (store.selection.kind === 'node') {
+      ev.preventDefault();
+      store.duplicateSelected();
+    }
+    return;
+  }
+  if (ev.key === 'Escape') {
+    if (store.selection.kind !== 'none') store.select({ kind: 'none' });
+    return;
+  }
+  if (ev.key === 'Delete' || ev.key === 'Backspace') {
+    if (store.selection.kind !== 'none') {
+      ev.preventDefault();
+      store.deleteSelected();
+    }
   }
 });
