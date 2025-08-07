@@ -43,7 +43,7 @@
 | 描画 | SVG(ライブラリ非依存) |
 | ビルド | Vite |
 | 保存 | localStorage + JSON入出力 |
-| テスト | Vitest(18テスト) |
+| テスト | Vitest + happy-dom(22テスト) |
 | リンタ | ESLint + Prettier |
 | CI / CD | GitHub Actions |
 | 配信 | GitHub Pages |
