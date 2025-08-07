@@ -15,6 +15,7 @@ export class Palette {
     heading.textContent = 'サービス';
     this.root.appendChild(heading);
 
+    let index = 0;
     for (const provider of Object.keys(PROVIDERS) as Provider[]) {
       const section = document.createElement('section');
       section.className = 'palette-provider';
@@ -30,6 +31,9 @@ export class Palette {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'palette-item';
+        // 読み込み時にカード状の項目を少しずつ立ち上げる(スタッガ入場)
+        btn.style.animationDelay = `${index * 26}ms`;
+        index += 1;
         btn.title = `${service.name}(${CATEGORY_LABEL[service.category]})`;
         const name = document.createElement('span');
         name.className = 'palette-name';
