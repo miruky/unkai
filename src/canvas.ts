@@ -20,7 +20,11 @@ type Drag =
 
 // SVGキャンバス。状態はStoreが持ち、ここは描画とポインタ操作だけを担う。
 export class Canvas {
-  readonly svg = svgEl('svg', { class: 'canvas' });
+  readonly svg = svgEl('svg', {
+    class: 'canvas',
+    role: 'application',
+    'aria-label': 'クラウド構成図のキャンバス。ノードのドラッグで移動、ポートのドラッグで接続します。',
+  });
   private edgeLayer = svgEl('g');
   private nodeLayer = svgEl('g');
   private overlay = svgEl('g');
@@ -30,7 +34,7 @@ export class Canvas {
     const defs = svgEl('defs');
     defs.innerHTML =
       '<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">' +
-      '<path d="M0 0L8 3L0 6z" fill="#94a3b8"/></marker>';
+      '<path d="M0 0L8 3L0 6z" class="arrow-head"/></marker>';
     this.svg.append(defs, this.edgeLayer, this.nodeLayer, this.overlay);
     this.bind();
     store.subscribe(() => this.render());
@@ -181,7 +185,11 @@ export class Canvas {
   private renderNode(node: DiagramNode): SVGElement {
     const def = serviceById(node.serviceId);
     const provider = def ? PROVIDERS[def.provider] : { color: '#888', label: '' };
-    const g = svgEl('g', { transform: `translate(${node.x} ${node.y})`, 'data-node-id': node.id });
+    const g = svgEl('g', {
+      class: 'node-group',
+      transform: `translate(${node.x} ${node.y})`,
+      'data-node-id': node.id,
+    });
     const selected = this.store.selection.kind === 'node' && this.store.selection.id === node.id;
 
     g.appendChild(svgEl('rect', { class: selected ? 'node selected' : 'node', width: NODE_W, height: NODE_H, rx: 9 }));
