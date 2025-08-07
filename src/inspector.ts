@@ -1,10 +1,12 @@
 import { CATEGORY_LABEL, PROVIDERS, serviceById, type ConfigField } from './catalog';
 import type { DiagramNode } from './model';
-import type { Store } from './store';
+import type { Selection, Store } from './store';
 
 // 右の詳細パネル。選択中のノードの設定項目を編集できる。
 export class Inspector {
   readonly root = document.createElement('aside');
+  // 直前に描画した選択対象。同じ対象の値更新では作り直さず、入力フォーカスを保つ。
+  private renderedKey = '';
 
   constructor(private readonly store: Store) {
     this.root.className = 'inspector';
@@ -12,24 +14,39 @@ export class Inspector {
     this.render();
   }
 
+  private selectionKey(sel: Selection): string {
+    return sel.kind === 'none' ? 'none' : `${sel.kind}:${sel.id}`;
+  }
+
   private render(): void {
-    this.root.replaceChildren();
     const sel = this.store.selection;
+    const key = this.selectionKey(sel);
+    // 選択対象が変わらない限り作り直さない。設定編集中のフォーカス喪失を防ぐ。
+    if (key === this.renderedKey) return;
+    this.renderedKey = key;
+
+    const body = document.createElement('div');
+    body.className = 'insp-body';
 
     if (sel.kind === 'none') {
-      this.root.appendChild(this.hint('ノードを選ぶと設定を編集できます。パレットの項目をクリックして配置し、ポートをドラッグして矢印で繋ぎます。'));
+      body.appendChild(this.hint('ノードを選ぶと設定を編集できます。パレットの項目をクリックして配置し、ポートをドラッグして矢印で繋ぎます。'));
+      this.root.replaceChildren(body);
       return;
     }
     if (sel.kind === 'edge') {
       const h = document.createElement('h2');
       h.textContent = '接続';
-      this.root.append(h, this.deleteButton('この接続を削除'));
+      body.append(h, this.deleteButton('この接続を削除'));
+      this.root.replaceChildren(body);
       return;
     }
 
     const node = this.store.diagram.nodes.find((n) => n.id === sel.id);
     const def = node && serviceById(node.serviceId);
-    if (!node || !def) return;
+    if (!node || !def) {
+      this.root.replaceChildren(body);
+      return;
+    }
 
     const head = document.createElement('div');
     head.className = 'insp-head';
@@ -42,13 +59,14 @@ export class Inspector {
     const meta = document.createElement('p');
     meta.className = 'insp-meta';
     meta.textContent = `${PROVIDERS[def.provider].label} ・ ${CATEGORY_LABEL[def.category]}`;
-    this.root.append(head, meta);
+    body.append(head, meta);
 
-    this.root.appendChild(this.labelField(node));
+    body.appendChild(this.labelField(node));
     for (const field of def.fields) {
-      this.root.appendChild(this.field(node, field));
+      body.appendChild(this.field(node, field));
     }
-    this.root.appendChild(this.deleteButton('このノードを削除'));
+    body.appendChild(this.deleteButton('このノードを削除'));
+    this.root.replaceChildren(body);
   }
 
   private hint(text: string): HTMLElement {

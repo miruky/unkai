@@ -125,6 +125,12 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.count {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .tb-btn {
   font: inherit;
   font-size: 13px;
@@ -137,6 +143,7 @@ body {
   transition:
     background-color 0.16s var(--ease),
     border-color 0.16s var(--ease),
+    transform 0.12s var(--ease),
     color 0.16s var(--ease);
 }
 
@@ -146,6 +153,7 @@ body {
 
 .tb-btn:active {
   background: var(--accent-soft);
+  transform: translateY(1px);
 }
 
 /* レイアウト: 左パレット / 中央キャンバス / 右インスペクタ */
@@ -281,6 +289,8 @@ body {
 
 .node-group {
   filter: drop-shadow(var(--shadow-node));
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .node {
@@ -458,6 +468,72 @@ body {
 .tb-btn:focus-visible,
 .palette-item:focus-visible {
   outline-offset: -2px;
+}
+
+/* モーション: 入場・状態遷移のマイクロインタラクション */
+@keyframes node-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.84);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.node-enter {
+  animation: node-pop 0.3s var(--ease) both;
+}
+
+@keyframes edge-draw {
+  from {
+    stroke-dashoffset: 1200;
+    opacity: 0.4;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.edge-enter {
+  stroke-dasharray: 1200;
+  animation: edge-draw 0.5s var(--ease) both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.palette-item {
+  animation: rise-in 0.34s var(--ease) both;
+}
+
+.insp-body {
+  animation: rise-in 0.24s var(--ease) both;
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toolbar {
+  animation: drop-in 0.3s var(--ease) both;
 }
 
 @media (max-width: 820px) {

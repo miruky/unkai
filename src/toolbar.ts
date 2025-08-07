@@ -6,6 +6,9 @@ import type { Store } from './store';
 export class Toolbar {
   readonly root = document.createElement('div');
   private summary = document.createElement('span');
+  private nodeCount = document.createElement('span');
+  private edgeCount = document.createElement('span');
+  private countFrames = new WeakMap<HTMLElement, number>();
 
   constructor(private readonly store: Store) {
     this.root.className = 'toolbar';
@@ -27,6 +30,9 @@ export class Toolbar {
     });
 
     this.summary.className = 'summary';
+    this.nodeCount.className = 'count';
+    this.edgeCount.className = 'count';
+    this.summary.append('ノード ', this.nodeCount, ' ・ 接続 ', this.edgeCount);
 
     this.fileInput.type = 'file';
     this.fileInput.accept = 'application/json,.json';
@@ -49,7 +55,30 @@ export class Toolbar {
 
   private updateSummary(): void {
     const { nodes, edges } = this.store.diagram;
-    this.summary.textContent = `ノード ${nodes.length} ・ 接続 ${edges.length}`;
+    this.animateCount(this.nodeCount, nodes.length);
+    this.animateCount(this.edgeCount, edges.length);
+  }
+
+  // 数値の変化を短いカウントアップで見せる。reduced-motion時は即時反映する。
+  private animateCount(el: HTMLElement, to: number): void {
+    const prev = this.countFrames.get(el);
+    if (prev !== undefined) cancelAnimationFrame(prev);
+    const from = Number(el.textContent) || 0;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (from === to || reduce) {
+      el.textContent = String(to);
+      return;
+    }
+    const duration = 320;
+    const start = performance.now();
+    const tick = (now: number): void => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(from + (to - from) * eased));
+      if (p < 1) this.countFrames.set(el, requestAnimationFrame(tick));
+      else this.countFrames.delete(el);
+    };
+    this.countFrames.set(el, requestAnimationFrame(tick));
   }
 
   private runCheck(): void {
