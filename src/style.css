@@ -352,6 +352,50 @@ body {
   cursor: grabbing;
 }
 
+.canvas-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.canvas-empty[hidden] {
+  display: none;
+}
+
+.canvas-empty-art {
+  width: 200px;
+  max-width: 60%;
+  height: auto;
+  margin-bottom: 10px;
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2.5;
+}
+
+.canvas-empty-arrow {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.canvas-empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.canvas-empty-sub {
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
 .node-group {
   filter: drop-shadow(var(--shadow-node));
   transform-box: fill-box;
@@ -717,6 +761,10 @@ body {
   animation: drop-in 0.24s var(--ease) both;
 }
 
+.link-banner[hidden] {
+  display: none;
+}
+
 .link-banner-cancel {
   font: inherit;
   font-size: 12px;
@@ -730,6 +778,69 @@ body {
 
 .link-banner-cancel:hover {
   background: rgba(255, 255, 255, 0.18);
+}
+
+/* ヘルプのモーダル */
+.help-dialog {
+  margin: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 460px;
+  width: calc(100vw - 32px);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.help-dialog[open] {
+  animation: rise-in 0.22s var(--ease) both;
+}
+
+.help-dialog::backdrop {
+  background: rgba(10, 15, 25, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.help-dialog h2 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.help-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 9px 16px;
+  font-size: 13px;
+}
+
+.help-list dt {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.help-list dd {
+  color: var(--ink-soft);
+}
+
+.help-close {
+  display: block;
+  margin: 22px 0 0 auto;
+  padding: 8px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.16s var(--ease),
+    background-color 0.16s var(--ease);
+}
+
+.help-close:hover {
+  border-color: var(--accent);
+  background: var(--surface-3);
 }
 
 /* 狭い画面: ツールバーは横スクロール、詳細パネルは下からのシートにする */

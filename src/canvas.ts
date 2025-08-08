@@ -32,6 +32,7 @@ export class Canvas {
   // 直前の描画に存在したid。差分で新規ノード・辺だけ入場アニメーションを当てる。
   private seenNodes = new Set<string>();
   private seenEdges = new Set<string>();
+  private emptyState = this.buildEmptyState();
 
   constructor(private readonly store: Store) {
     const defs = svgEl('defs');
@@ -46,8 +47,25 @@ export class Canvas {
 
   mount(parent: HTMLElement): void {
     parent.appendChild(this.svg);
+    parent.appendChild(this.emptyState);
     this.applyViewBox();
     this.render();
+  }
+
+  // ノードが無いときに中央へ出す導線。クリックは透過してパン操作を妨げない。
+  private buildEmptyState(): HTMLElement {
+    const el = document.createElement('div');
+    el.className = 'canvas-empty';
+    el.innerHTML =
+      '<svg class="canvas-empty-art" viewBox="0 0 220 120" aria-hidden="true">' +
+      '<rect x="14" y="40" width="74" height="42" rx="9"/>' +
+      '<rect x="132" y="40" width="74" height="42" rx="9"/>' +
+      '<path class="canvas-empty-arrow" d="M92 61h28"/>' +
+      '<path class="canvas-empty-arrow" d="M116 55.5l6.5 5.5-6.5 5.5"/>' +
+      '</svg>' +
+      '<p class="canvas-empty-title">クラウドサービスを置いて、矢印で繋ぎましょう</p>' +
+      '<p class="canvas-empty-sub">左のパレットから選ぶか、サービス名で検索します</p>';
+    return el;
   }
 
   // 現在のビューポート中央のワールド座標。パレットからの追加位置に使う。
@@ -208,6 +226,7 @@ export class Canvas {
   private render(): void {
     this.applyViewBox();
     this.svg.classList.toggle('is-linking', this.store.linking !== null);
+    this.emptyState.hidden = this.store.diagram.nodes.length > 0;
     this.renderEdges();
     this.renderNodes();
     this.renderOverlay();

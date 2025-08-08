@@ -1,3 +1,4 @@
+import { showHelp } from './help';
 import { isolatedNodes } from './model';
 import { shareUrl } from './share';
 import type { Store } from './store';
@@ -11,6 +12,7 @@ const ICON = {
   light:
     '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M21.5 12h-2.4M4.9 12H2.5M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/>',
   dark: '<path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5z"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.4 9.6a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.1-2.6 3.7"/><circle cx="12" cy="17.3" r="0.7" fill="currentColor" stroke="none"/>',
 };
 
 // 上部のツールバー。保存はStoreが自動で行うため、ここは履歴操作・構成チェック・
@@ -57,6 +59,7 @@ export class Toolbar {
     const clearBtn = this.button('全消去', () => {
       if (confirm('図をすべて消去しますか?')) this.store.clear();
     });
+    const helpBtn = this.iconButton('ヘルプ', ICON.help, () => showHelp());
     this.themeBtn = this.iconButton('テーマ切替', ICON.auto, () => this.cycleTheme());
     this.updateThemeButton();
 
@@ -80,6 +83,7 @@ export class Toolbar {
       exportBtn,
       importBtn,
       clearBtn,
+      helpBtn,
       this.themeBtn,
       this.fileInput,
       this.linkBanner,
