@@ -74,3 +74,55 @@ describe('Store 複製', () => {
     expect(s.diagram.nodes).toHaveLength(0);
   });
 });
+
+describe('Store 接続モード', () => {
+  function twoNodes(s: Store): [string, string] {
+    s.addNode('aws.lambda', 0, 0);
+    const a = selectedId(s);
+    s.addNode('aws.s3', 60, 0);
+    const b = selectedId(s);
+    return [a, b];
+  }
+
+  it('startLink から completeLink で辺を張る', () => {
+    const s = new Store();
+    const [a, b] = twoNodes(s);
+    s.startLink(a);
+    expect(s.linking).toBe(a);
+    s.completeLink(b);
+    expect(s.linking).toBeNull();
+    expect(s.diagram.edges).toHaveLength(1);
+  });
+
+  it('同じノードへ確定しても辺は張らずモードを抜ける', () => {
+    const s = new Store();
+    const [a] = twoNodes(s);
+    s.startLink(a);
+    s.completeLink(a);
+    expect(s.linking).toBeNull();
+    expect(s.diagram.edges).toHaveLength(0);
+  });
+
+  it('cancelLink でモードを抜ける', () => {
+    const s = new Store();
+    const [a] = twoNodes(s);
+    s.startLink(a);
+    s.cancelLink();
+    expect(s.linking).toBeNull();
+  });
+
+  it('存在しないノードからは始めない', () => {
+    const s = new Store();
+    s.startLink('missing');
+    expect(s.linking).toBeNull();
+  });
+
+  it('ノード削除で接続モードを解除する', () => {
+    const s = new Store();
+    s.addNode('aws.lambda', 0, 0);
+    const a = selectedId(s);
+    s.startLink(a);
+    s.deleteSelected();
+    expect(s.linking).toBeNull();
+  });
+});
