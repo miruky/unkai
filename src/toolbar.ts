@@ -25,6 +25,7 @@ export class Toolbar {
   private undoBtn!: HTMLButtonElement;
   private redoBtn!: HTMLButtonElement;
   private themeBtn!: HTMLButtonElement;
+  private linkBanner!: HTMLElement;
   private theme: ThemeMode = 'auto';
 
   constructor(private readonly store: Store) {
@@ -37,7 +38,7 @@ export class Toolbar {
   }
 
   private build(): void {
-    const title = document.createElement('span');
+    const title = document.createElement('h1');
     title.className = 'brand';
     title.textContent = 'unkai';
 
@@ -68,6 +69,8 @@ export class Toolbar {
     group.className = 'tb-group';
     group.append(this.undoBtn, this.redoBtn);
 
+    this.linkBanner = this.buildLinkBanner();
+
     this.root.append(
       title,
       this.summary,
@@ -79,7 +82,24 @@ export class Toolbar {
       clearBtn,
       this.themeBtn,
       this.fileInput,
+      this.linkBanner,
     );
+  }
+
+  private buildLinkBanner(): HTMLElement {
+    const banner = document.createElement('div');
+    banner.className = 'link-banner';
+    banner.hidden = true;
+    banner.setAttribute('role', 'status');
+    const msg = document.createElement('span');
+    msg.textContent = '接続先のノードを選んでください。Esc でキャンセル。';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'link-banner-cancel';
+    cancel.textContent = 'キャンセル';
+    cancel.addEventListener('click', () => this.store.cancelLink());
+    banner.append(msg, cancel);
+    return banner;
   }
 
   private button(label: string, onClick: () => void): HTMLButtonElement {
@@ -108,6 +128,7 @@ export class Toolbar {
     this.animateCount(this.edgeCount, edges.length);
     this.undoBtn.disabled = !this.store.canUndo;
     this.redoBtn.disabled = !this.store.canRedo;
+    this.linkBanner.hidden = this.store.linking === null;
   }
 
   // 数値の変化を短いカウントアップで見せる。reduced-motion時は即時反映する。
