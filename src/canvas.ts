@@ -1,4 +1,4 @@
-import { CATEGORY_ICON, PROVIDERS, serviceById } from './catalog';
+import { CATEGORY_ICON, CATEGORY_LABEL, PROVIDERS, serviceById } from './catalog';
 import {
   edgePath,
   inputPort,
@@ -73,10 +73,64 @@ export class Canvas {
     window.addEventListener('pointermove', (ev) => this.onMove(ev));
     window.addEventListener('pointerup', (ev) => this.onUp(ev));
     this.svg.addEventListener('wheel', (ev) => this.onWheel(ev), { passive: false });
+    this.svg.addEventListener('keydown', (ev) => this.onKey(ev));
+  }
+
+  // ノードにフォーカスがあるときのキーボード操作。
+  private onKey(ev: KeyboardEvent): void {
+    const el = (ev.target as Element).closest('[data-node-id]');
+    if (!el) return;
+    const id = el.getAttribute('data-node-id') ?? '';
+
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      if (this.store.linking !== null) this.store.completeLink(id);
+      else this.store.select({ kind: 'node', id });
+      this.refocus(id);
+      return;
+    }
+    if ((ev.key === 'c' || ev.key === 'C') && this.store.linking === null) {
+      ev.preventDefault();
+      this.store.select({ kind: 'node', id });
+      this.store.startLink(id);
+      this.refocus(id);
+      return;
+    }
+
+    const step = ev.shiftKey ? 1 : 8;
+    let dx = 0;
+    let dy = 0;
+    if (ev.key === 'ArrowLeft') dx = -step;
+    else if (ev.key === 'ArrowRight') dx = step;
+    else if (ev.key === 'ArrowUp') dy = -step;
+    else if (ev.key === 'ArrowDown') dy = step;
+    else return;
+    ev.preventDefault();
+    const node = this.store.diagram.nodes.find((n) => n.id === id);
+    if (!node) return;
+    this.store.select({ kind: 'node', id });
+    this.store.moveNode(id, node.x + dx, node.y + dy);
+    this.store.commit();
+    this.refocus(id);
+  }
+
+  // 再描画でノード要素が作り直されるため、操作後に同じノードへフォーカスを戻す。
+  private refocus(id: string): void {
+    const g = this.nodeLayer.querySelector(`[data-node-id="${CSS.escape(id)}"]`);
+    (g as SVGGElement | null)?.focus?.();
   }
 
   private onDown(ev: PointerEvent): void {
     const target = ev.target as Element;
+
+    // 接続モード中はクリックした先を接続先として確定し、背景ならキャンセルする。
+    if (this.store.linking !== null) {
+      const nodeEl = target.closest('[data-node-id]');
+      if (nodeEl) this.store.completeLink(nodeEl.getAttribute('data-node-id') ?? '');
+      else this.store.cancelLink();
+      return;
+    }
+
     const portEl = target.closest('[data-port]');
     if (portEl) {
       const nodeId = portEl.getAttribute('data-node') ?? '';
@@ -153,6 +207,7 @@ export class Canvas {
 
   private render(): void {
     this.applyViewBox();
+    this.svg.classList.toggle('is-linking', this.store.linking !== null);
     this.renderEdges();
     this.renderNodes();
     this.renderOverlay();
@@ -212,7 +267,14 @@ export class Canvas {
   private renderNode(node: DiagramNode, enterIndex: number): SVGElement {
     const def = serviceById(node.serviceId);
     const provider = def ? PROVIDERS[def.provider] : { color: '#888', label: '' };
-    const g = svgEl('g', { transform: `translate(${node.x} ${node.y})`, 'data-node-id': node.id });
+    const category = def ? `・${CATEGORY_LABEL[def.category]}` : '';
+    const g = svgEl('g', {
+      transform: `translate(${node.x} ${node.y})`,
+      'data-node-id': node.id,
+      tabindex: '0',
+      role: 'button',
+      'aria-label': `${node.label}(${provider.label}${category})。Enterで選択、矢印キーで移動、cキーで接続を開始`,
+    });
     const inner = svgEl('g', { class: 'node-group' });
     if (enterIndex >= 0) {
       inner.classList.add('node-enter');
