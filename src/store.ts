@@ -33,6 +33,8 @@ export class Store {
   diagram: Diagram;
   selection: Selection = { kind: 'none' };
   view: View = { x: -80, y: -60, scale: 1 };
+  // キーボード・タップで接続するための一時モード。接続元ノードのid。
+  linking: string | null = null;
 
   private listeners: Listener[] = [];
   private past: Diagram[] = [];
@@ -89,6 +91,7 @@ export class Store {
     this.diagram = prev;
     this.selection = { kind: 'none' };
     this.lastTag = null;
+    this.linking = null;
     this.emit();
   }
 
@@ -99,6 +102,7 @@ export class Store {
     this.diagram = next;
     this.selection = { kind: 'none' };
     this.lastTag = null;
+    this.linking = null;
     this.emit();
   }
 
@@ -160,6 +164,28 @@ export class Store {
     this.emit();
   }
 
+  // 接続モードの開始・キャンセル・確定。マウスのポートドラッグとは別の経路で、
+  // キーボードやタップからも矢印を引けるようにする。
+  startLink(from: string): void {
+    if (!this.diagram.nodes.some((n) => n.id === from)) return;
+    this.linking = from;
+    this.notify();
+  }
+
+  cancelLink(): void {
+    if (this.linking === null) return;
+    this.linking = null;
+    this.notify();
+  }
+
+  completeLink(to: string): void {
+    const from = this.linking;
+    if (from === null) return;
+    this.linking = null;
+    if (from !== to) this.link(from, to);
+    this.notify();
+  }
+
   setConfig(id: string, key: string, value: ConfigValue): void {
     const node = this.diagram.nodes.find((n) => n.id === id);
     if (!node) return;
@@ -194,6 +220,7 @@ export class Store {
       return;
     }
     this.selection = { kind: 'none' };
+    this.linking = null;
     this.emit();
   }
 
@@ -201,6 +228,7 @@ export class Store {
     this.pushHistory(null);
     this.diagram = emptyDiagram();
     this.selection = { kind: 'none' };
+    this.linking = null;
     this.emit();
   }
 
@@ -208,6 +236,7 @@ export class Store {
     this.pushHistory(null);
     this.diagram = diagram;
     this.selection = { kind: 'none' };
+    this.linking = null;
     this.emit();
   }
 
