@@ -78,7 +78,8 @@ window.addEventListener('keydown', (ev) => {
     return;
   }
   if (ev.key === 'Escape') {
-    if (store.selection.kind !== 'none') store.select({ kind: 'none' });
+    if (store.linking !== null) store.cancelLink();
+    else if (store.selection.kind !== 'none') store.select({ kind: 'none' });
     return;
   }
   if (ev.key === 'Delete' || ev.key === 'Backspace') {
