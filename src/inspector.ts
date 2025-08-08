@@ -21,6 +21,8 @@ export class Inspector {
   private render(): void {
     const sel = this.store.selection;
     const key = this.selectionKey(sel);
+    // モバイルでは選択時だけ詳細パネルをせり上げる。選択の有無を body へ反映する。
+    document.body.classList.toggle('has-selection', sel.kind !== 'none');
     // 選択対象が変わらない限り作り直さない。設定編集中のフォーカス喪失を防ぐ。
     if (key === this.renderedKey) return;
     this.renderedKey = key;
@@ -65,8 +67,18 @@ export class Inspector {
     for (const field of def.fields) {
       body.appendChild(this.field(node, field));
     }
+    body.appendChild(this.connectButton(node.id));
     body.appendChild(this.deleteButton('このノードを削除'));
     this.root.replaceChildren(body);
+  }
+
+  private connectButton(nodeId: string): HTMLElement {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'insp-connect';
+    btn.textContent = 'ここから接続';
+    btn.addEventListener('click', () => this.store.startLink(nodeId));
+    return btn;
   }
 
   private hint(text: string): HTMLElement {
