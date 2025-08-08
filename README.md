@@ -31,6 +31,7 @@
 - **共有** — 「共有」で図を URL に載せたリンクをコピーします。そのリンクを開くと同じ図が復元されます
 - **書き出し / 読み込み** — 図を JSON ファイルとして保存・復元します
 - **テーマ** — 右端のボタンで自動(OS追従)・ライト・ダークを切り替えます。選択は記憶されます
+- **ヘルプ** — ツールバーのヘルプボタンで、操作とショートカットの一覧を開きます
 
 ## アーキテクチャ
 
@@ -46,7 +47,7 @@
 | 描画 | SVG(ライブラリ非依存) |
 | ビルド | Vite |
 | 保存 / 共有 | localStorage + JSON入出力 + URLリンク共有 |
-| テスト | Vitest + happy-dom(39テスト) |
+| テスト | Vitest + happy-dom(46テスト) |
 | リンタ | ESLint + Prettier |
 | CI / CD | GitHub Actions |
 | 配信 | GitHub Pages |
@@ -60,7 +61,7 @@
 - `src/canvas.ts` — SVGキャンバスの描画とポインタ操作
 - `src/palette.ts` / `src/inspector.ts` / `src/toolbar.ts` — 各UIパネル
 - `src/share.ts` — 図をURLへ載せる共有リンクの符号化
-- `src/theme.ts` / `src/toast.ts` — テーマ切替と通知
+- `src/theme.ts` / `src/toast.ts` / `src/help.ts` — テーマ切替・通知・ヘルプ
 - `src/main.ts` — 全体の組み立てとキーボード操作
 - `docs/architecture.svg` — アーキテクチャ図
 
