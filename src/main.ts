@@ -59,6 +59,29 @@ window.addEventListener('keydown', (ev) => {
   }
 
   const mod = ev.metaKey || ev.ctrlKey;
+  // 表示倍率(修飾キー無し)。+ / - / 0(リセット)/ f(全体表示)。
+  if (!mod) {
+    if (ev.key === '+' || ev.key === '=') {
+      ev.preventDefault();
+      canvas.zoomIn();
+      return;
+    }
+    if (ev.key === '-' || ev.key === '_') {
+      ev.preventDefault();
+      canvas.zoomOut();
+      return;
+    }
+    if (ev.key === '0') {
+      ev.preventDefault();
+      canvas.resetView();
+      return;
+    }
+    if (ev.key === 'f' || ev.key === 'F') {
+      ev.preventDefault();
+      canvas.fitToContent();
+      return;
+    }
+  }
   if (mod && (ev.key === 'z' || ev.key === 'Z')) {
     ev.preventDefault();
     if (ev.shiftKey) store.redo();
