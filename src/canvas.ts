@@ -1,6 +1,9 @@
 import { CATEGORY_ICON, CATEGORY_LABEL, PROVIDERS, serviceById } from './catalog';
 import {
+  boundingBox,
+  clampScale,
   edgePath,
+  fitView,
   inputPort,
   NODE_H,
   NODE_W,
@@ -33,6 +36,8 @@ export class Canvas {
   private seenNodes = new Set<string>();
   private seenEdges = new Set<string>();
   private emptyState = this.buildEmptyState();
+  private zoomReadout = document.createElement('button');
+  private zoomControl = this.buildZoomControl();
 
   constructor(private readonly store: Store) {
     const defs = svgEl('defs');
@@ -48,8 +53,83 @@ export class Canvas {
   mount(parent: HTMLElement): void {
     parent.appendChild(this.svg);
     parent.appendChild(this.emptyState);
+    parent.appendChild(this.zoomControl);
     this.applyViewBox();
     this.render();
+  }
+
+  // 左下のズーム操作。倍率表示はリセット(100%)ボタンを兼ねる。
+  private buildZoomControl(): HTMLElement {
+    const bar = document.createElement('div');
+    bar.className = 'zoom-control';
+    bar.setAttribute('role', 'group');
+    bar.setAttribute('aria-label', '表示倍率の操作');
+
+    const minus = this.zoomButton('縮小', '<path d="M5 12h14"/>', () => this.zoomOut());
+    this.zoomReadout.type = 'button';
+    this.zoomReadout.className = 'zoom-readout';
+    this.zoomReadout.title = '100% に戻す';
+    this.zoomReadout.setAttribute('aria-label', '表示倍率を 100% に戻す');
+    this.zoomReadout.textContent = '100%';
+    this.zoomReadout.addEventListener('click', () => this.resetView());
+    const plus = this.zoomButton('拡大', '<path d="M12 5v14M5 12h14"/>', () => this.zoomIn());
+    const fit = this.zoomButton(
+      '全体を表示',
+      '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16" opacity="0"/><path d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4"/>',
+      () => this.fitToContent(),
+    );
+
+    bar.append(minus, this.zoomReadout, plus, fit);
+    return bar;
+  }
+
+  private zoomButton(label: string, icon: string, onClick: () => void): HTMLButtonElement {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'zoom-btn';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`;
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  // カーソル(または画面中央)を固定したまま倍率を掛ける。
+  private zoomAt(factor: number, screen?: Point): void {
+    const rect = this.svg.getBoundingClientRect();
+    const sx = screen?.x ?? rect.left + rect.width / 2;
+    const sy = screen?.y ?? rect.top + rect.height / 2;
+    const before = screenToWorld(sx, sy, rect, this.store.view);
+    this.store.view.scale = clampScale(this.store.view.scale * factor);
+    const after = screenToWorld(sx, sy, rect, this.store.view);
+    this.store.view.x += before.x - after.x;
+    this.store.view.y += before.y - after.y;
+    this.applyViewBox();
+  }
+
+  zoomIn(): void {
+    this.zoomAt(1.2);
+  }
+
+  zoomOut(): void {
+    this.zoomAt(1 / 1.2);
+  }
+
+  resetView(): void {
+    this.store.view = { x: -80, y: -60, scale: 1 };
+    this.applyViewBox();
+  }
+
+  // 全ノードが収まるよう原点と倍率を合わせる。ノードが無ければ初期表示に戻す。
+  fitToContent(): void {
+    const box = boundingBox(this.store.diagram.nodes);
+    const rect = this.svg.getBoundingClientRect();
+    if (!box || rect.width === 0 || rect.height === 0) {
+      this.resetView();
+      return;
+    }
+    this.store.view = fitView({ width: rect.width, height: rect.height }, box);
+    this.applyViewBox();
   }
 
   // ノードが無いときに中央へ出す導線。クリックは透過してパン操作を妨げない。
@@ -79,6 +159,7 @@ export class Canvas {
     const rect = this.svg.getBoundingClientRect();
     const { x, y, scale } = this.store.view;
     this.svg.setAttribute('viewBox', `${x} ${y} ${rect.width / scale} ${rect.height / scale}`);
+    this.zoomReadout.textContent = `${Math.round(scale * 100)}%`;
   }
 
   private toWorld(ev: PointerEvent): Point {
@@ -212,15 +293,8 @@ export class Canvas {
 
   private onWheel(ev: WheelEvent): void {
     ev.preventDefault();
-    const rect = this.svg.getBoundingClientRect();
-    const before = screenToWorld(ev.clientX, ev.clientY, rect, this.store.view);
     const factor = ev.deltaY < 0 ? 1.1 : 1 / 1.1;
-    this.store.view.scale = Math.min(2.5, Math.max(0.3, this.store.view.scale * factor));
-    // カーソル位置を固定するようにビュー原点を補正
-    const after = screenToWorld(ev.clientX, ev.clientY, rect, this.store.view);
-    this.store.view.x += before.x - after.x;
-    this.store.view.y += before.y - after.y;
-    this.applyViewBox();
+    this.zoomAt(factor, { x: ev.clientX, y: ev.clientY });
   }
 
   private render(): void {
