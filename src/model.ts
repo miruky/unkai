@@ -15,6 +15,8 @@ export interface DiagramEdge {
   id: string;
   from: string;
   to: string;
+  // 接続の意味を添えるラベル(例: events、HTTPS、read)。未設定なら描画しない。
+  label?: string;
 }
 
 export interface Diagram {
@@ -115,7 +117,13 @@ export function deserialize(text: string): Diagram {
     const key = `${e.from}->${e.to}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    edges.push({ id: typeof e.id === 'string' ? e.id : genId('e'), from: e.from, to: e.to });
+    const edge: DiagramEdge = {
+      id: typeof e.id === 'string' ? e.id : genId('e'),
+      from: e.from,
+      to: e.to,
+    };
+    if (typeof e.label === 'string' && e.label !== '') edge.label = e.label;
+    edges.push(edge);
   }
   return { nodes, edges };
 }
