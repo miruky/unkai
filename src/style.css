@@ -20,9 +20,13 @@
   --edge: #97a3b4;
   --danger: #cf4b3a;
   --danger-soft: rgba(207, 75, 58, 0.1);
-  --grid-dot: rgba(20, 30, 50, 0.06);
-  --shadow: 0 1px 2px rgba(20, 30, 50, 0.08), 0 4px 16px rgba(20, 30, 50, 0.06);
-  --shadow-node: 0 1px 2px rgba(20, 30, 50, 0.14);
+  --grid-dot: rgba(20, 30, 50, 0.055);
+  /* 影はほぼ使わない。浮遊要素(トースト・モーダル・操作パネル)だけに極薄で当てる */
+  --shadow: 0 1px 2px rgba(20, 30, 50, 0.06), 0 8px 28px rgba(20, 30, 50, 0.08);
+  --shadow-node: 0 1px 1px rgba(20, 30, 50, 0.05);
+
+  --font-sans: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  --font-serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
 
   --step: 8px;
   --radius: 10px;
@@ -47,8 +51,8 @@
   --danger: #f0664f;
   --danger-soft: rgba(240, 102, 79, 0.16);
   --grid-dot: rgba(255, 255, 255, 0.05);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
-  --shadow-node: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.4);
+  --shadow-node: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -69,8 +73,8 @@
     --danger: #f0664f;
     --danger-soft: rgba(240, 102, 79, 0.16);
     --grid-dot: rgba(255, 255, 255, 0.05);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
-    --shadow-node: 0 1px 3px rgba(0, 0, 0, 0.5);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.4);
+    --shadow-node: 0 1px 2px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -87,11 +91,12 @@ body,
 }
 
 body {
-  font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--ink);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .app {
@@ -112,16 +117,33 @@ body {
 }
 
 .brand {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--ink);
+}
+
+/* ブランド末尾のアクセント点。低彩度の地に一点だけ色を置く */
+.brand::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  align-self: flex-end;
+  margin-bottom: 3px;
 }
 
 .summary {
   color: var(--ink-soft);
-  font-size: 12.5px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
   margin-right: auto;
+  margin-left: calc(var(--step) * 0.5);
   font-variant-numeric: tabular-nums;
 }
 
@@ -386,14 +408,85 @@ body {
 }
 
 .canvas-empty-title {
-  font-size: 15px;
+  font-family: var(--font-serif);
+  font-size: 19px;
   font-weight: 600;
-  color: var(--ink-soft);
+  letter-spacing: 0.01em;
+  color: var(--ink);
 }
 
 .canvas-empty-sub {
   font-size: 13px;
+  letter-spacing: 0.01em;
   color: var(--ink-faint);
+}
+
+/* ズーム操作パネル(キャンバス左下) */
+.zoom-control {
+  position: absolute;
+  left: calc(var(--step) * 2);
+  bottom: calc(var(--step) * 2);
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+  z-index: 20;
+}
+
+.zoom-btn,
+.zoom-readout {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 999px;
+  transition:
+    background-color 0.16s var(--ease),
+    color 0.16s var(--ease);
+}
+
+.zoom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+}
+
+.zoom-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.zoom-readout {
+  min-width: 52px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.zoom-btn:hover,
+.zoom-readout:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.zoom-btn:active {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .node-group {
@@ -803,8 +896,11 @@ body {
 }
 
 .help-dialog h2 {
-  font-size: 16px;
-  margin-bottom: 16px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 18px;
 }
 
 .help-list {
