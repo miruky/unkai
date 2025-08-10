@@ -42,6 +42,12 @@ export function edgePath(from: Point, to: Point): string {
   return `M ${from.x} ${from.y} C ${from.x + dx} ${from.y}, ${to.x - dx} ${to.y}, ${to.x} ${to.y}`;
 }
 
+// 接続ラベルを置く位置。edgePath の三次ベジェは制御点が端点とy座標を共有し、
+// 張り出し量が打ち消し合うため、t=0.5 の点は両端点の中点に一致する。
+export function edgeMidpoint(from: Point, to: Point): Point {
+  return { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+}
+
 // 全ノードを囲む矩形(ノードの幅高を含む)。ノードが無ければnull。
 export function boundingBox(nodes: DiagramNode[]): Box | null {
   if (nodes.length === 0) return null;
