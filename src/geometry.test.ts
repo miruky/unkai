@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createNode } from './model';
 import {
+  boundingBox,
+  clampScale,
   edgePath,
+  fitView,
   inputPort,
+  MAX_SCALE,
+  MIN_SCALE,
   NODE_H,
   NODE_W,
   nodeContains,
@@ -33,6 +38,46 @@ describe('edgePath', () => {
     const path = edgePath({ x: 0, y: 0 }, { x: 200, y: 100 });
     expect(path.startsWith('M 0 0 C')).toBe(true);
     expect(path.endsWith('200 100')).toBe(true);
+  });
+});
+
+describe('clampScale', () => {
+  it('下限・上限で頭打ちにする', () => {
+    expect(clampScale(0.01)).toBe(MIN_SCALE);
+    expect(clampScale(99)).toBe(MAX_SCALE);
+    expect(clampScale(1)).toBe(1);
+  });
+});
+
+describe('boundingBox', () => {
+  it('ノードが無ければnull', () => {
+    expect(boundingBox([])).toBeNull();
+  });
+
+  it('全ノードを幅高込みで囲む', () => {
+    const a = createNode('aws.lambda', 0, 0);
+    const b = createNode('aws.s3', 100, 50);
+    expect(boundingBox([a, b])).toEqual({ x: 0, y: 0, w: 100 + NODE_W, h: 50 + NODE_H });
+  });
+});
+
+describe('fitView', () => {
+  it('ボックス中心をビューポート中心に合わせる', () => {
+    const box = { x: 0, y: 0, w: 200, h: 100 };
+    const view = fitView({ width: 800, height: 600 }, box, 0);
+    const cx = view.x + 800 / view.scale / 2;
+    const cy = view.y + 600 / view.scale / 2;
+    expect(cx).toBeCloseTo(100);
+    expect(cy).toBeCloseTo(50);
+  });
+
+  it('はみ出さないよう小さい方の倍率を選び、下限・上限で頭打ちにする', () => {
+    // 横長すぎて 0.2 倍が必要だが下限 0.3 で止まる
+    const wide = fitView({ width: 400, height: 400 }, { x: 0, y: 0, w: 2000, h: 100 }, 0);
+    expect(wide.scale).toBe(MIN_SCALE);
+    // 小さなボックスは拡大しすぎないよう上限で止まる
+    const tiny = fitView({ width: 800, height: 600 }, { x: 0, y: 0, w: 10, h: 10 }, 0);
+    expect(tiny.scale).toBe(MAX_SCALE);
   });
 });
 
