@@ -3,6 +3,7 @@ import { createNode } from './model';
 import {
   boundingBox,
   clampScale,
+  edgeMidpoint,
   edgePath,
   fitView,
   inputPort,
@@ -38,6 +39,12 @@ describe('edgePath', () => {
     const path = edgePath({ x: 0, y: 0 }, { x: 200, y: 100 });
     expect(path.startsWith('M 0 0 C')).toBe(true);
     expect(path.endsWith('200 100')).toBe(true);
+  });
+});
+
+describe('edgeMidpoint', () => {
+  it('両端点の中点を返す', () => {
+    expect(edgeMidpoint({ x: 0, y: 0 }, { x: 200, y: 100 })).toEqual({ x: 100, y: 50 });
   });
 });
 
