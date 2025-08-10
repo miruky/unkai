@@ -9,6 +9,7 @@ const SHORTCUTS: [string, string][] = [
   ['取り消し / やり直し', 'Cmd / Ctrl + Z / Shift を足してやり直し'],
   ['選択解除・接続中止', 'Esc'],
   ['表示', '背景ドラッグでパン、ホイールでズーム'],
+  ['倍率', '+ / - でズーム、0 で等倍、f で全体表示'],
 ];
 
 let dialog: HTMLDialogElement | null = null;
