@@ -126,3 +126,31 @@ describe('Store 接続モード', () => {
     expect(s.linking).toBeNull();
   });
 });
+
+describe('Store 接続ラベル', () => {
+  function oneEdge(s: Store): string {
+    s.addNode('aws.lambda', 0, 0);
+    const a = selectedId(s);
+    s.addNode('aws.s3', 60, 0);
+    const b = selectedId(s);
+    s.link(a, b);
+    return s.diagram.edges[0]!.id;
+  }
+
+  it('ラベルを設定し、空文字で消す', () => {
+    const s = new Store();
+    const id = oneEdge(s);
+    s.setEdgeLabel(id, '  events  ');
+    expect(s.diagram.edges[0]!.label).toBe('events');
+    s.setEdgeLabel(id, '   ');
+    expect(s.diagram.edges[0]!.label).toBeUndefined();
+  });
+
+  it('ラベル変更は undo で戻る', () => {
+    const s = new Store();
+    const id = oneEdge(s);
+    s.setEdgeLabel(id, 'HTTPS');
+    s.undo();
+    expect(s.diagram.edges[0]!.label).toBeUndefined();
+  });
+});

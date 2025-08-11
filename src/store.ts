@@ -202,6 +202,16 @@ export class Store {
     this.emit();
   }
 
+  setEdgeLabel(id: string, label: string): void {
+    const edge = this.diagram.edges.find((e) => e.id === id);
+    if (!edge) return;
+    this.pushHistory(`edgeLabel:${id}`);
+    const trimmed = label.trim();
+    if (trimmed) edge.label = trimmed;
+    else delete edge.label;
+    this.emit();
+  }
+
   select(selection: Selection): void {
     this.selection = selection;
     // 選択が変わったら同種操作のまとめを打ち切る

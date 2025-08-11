@@ -89,6 +89,28 @@ describe('serialize と deserialize', () => {
     expect(restored.nodes[0]!.config.memory).toBe(512);
   });
 
+  it('接続ラベルを往復で保つ', () => {
+    const d = diagramWith('aws.lambda', 'aws.sqs');
+    const edge = connect(d, d.nodes[0]!.id, d.nodes[1]!.id)!;
+    edge.label = 'events';
+    const restored = deserialize(serialize(d));
+    expect(restored.edges[0]!.label).toBe('events');
+  });
+
+  it('空のラベルは復元時に持ち越さない', () => {
+    const text = JSON.stringify({
+      version: 1,
+      diagram: {
+        nodes: [
+          { id: 'n1', serviceId: 'aws.lambda', x: 0, y: 0, label: 'L', config: {} },
+          { id: 'n2', serviceId: 'aws.s3', x: 0, y: 0, label: 'S', config: {} },
+        ],
+        edges: [{ id: 'e1', from: 'n1', to: 'n2', label: '' }],
+      },
+    });
+    expect(deserialize(text).edges[0]!.label).toBeUndefined();
+  });
+
   it('未知サービスのノードと端点を失った辺を捨てる', () => {
     const text = JSON.stringify({
       version: 1,
