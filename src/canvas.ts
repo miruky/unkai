@@ -2,6 +2,7 @@ import { CATEGORY_ICON, CATEGORY_LABEL, PROVIDERS, serviceById } from './catalog
 import {
   boundingBox,
   clampScale,
+  edgeMidpoint,
   edgePath,
   fitView,
   inputPort,
@@ -340,6 +341,18 @@ export class Canvas {
         );
       }
       this.edgeLayer.append(hit, line);
+
+      if (edge.label) {
+        const mid = edgeMidpoint(outputPort(from), inputPort(to));
+        const text = svgEl('text', {
+          class: selected ? 'edge-label selected' : 'edge-label',
+          x: mid.x,
+          y: mid.y,
+          'data-edge-id': edge.id,
+        });
+        text.textContent = edge.label;
+        this.edgeLayer.append(text);
+      }
     }
     this.seenEdges = current;
   }

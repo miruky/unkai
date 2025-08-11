@@ -499,7 +499,14 @@ body {
   fill: var(--surface);
   stroke: var(--line-strong);
   stroke-width: 1;
-  transition: stroke 0.16s var(--ease);
+  transition:
+    stroke 0.16s var(--ease),
+    fill 0.16s var(--ease);
+}
+
+/* ホバーの控えめなアフォーダンス(選択・フォーカス時の指定が優先される) */
+[data-node-id]:hover .node {
+  stroke: var(--edge);
 }
 
 .node.selected {
@@ -578,6 +585,7 @@ body {
   fill: none;
   stroke: var(--edge);
   stroke-width: 2;
+  transition: stroke 0.16s var(--ease);
 }
 
 .edge.selected {
@@ -590,6 +598,11 @@ body {
   stroke-dasharray: 5 4;
 }
 
+/* ヒット領域にホバーで、隣接する実線をアクセントへ */
+.edge-hit:hover + .edge {
+  stroke: var(--accent-strong);
+}
+
 .arrow-head {
   fill: var(--edge);
 }
@@ -599,6 +612,26 @@ body {
   stroke: transparent;
   stroke-width: 14;
   cursor: pointer;
+}
+
+/* 接続ラベル。地色のstrokeで縁取り、線や格子から浮かせて読ませる */
+.edge-label {
+  fill: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.edge-label.selected {
+  fill: var(--accent);
 }
 
 /* インスペクタ */
