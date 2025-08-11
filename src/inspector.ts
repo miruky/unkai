@@ -36,9 +36,16 @@ export class Inspector {
       return;
     }
     if (sel.kind === 'edge') {
+      const edge = this.store.diagram.edges.find((e) => e.id === sel.id);
       const h = document.createElement('h2');
       h.textContent = '接続';
-      body.append(h, this.deleteButton('この接続を削除'));
+      body.append(h);
+      const meta = document.createElement('p');
+      meta.className = 'insp-meta';
+      meta.textContent = 'ラベルで接続の意味(events、HTTPS、read など)を添えられます。';
+      body.append(meta);
+      if (edge) body.appendChild(this.edgeLabelField(edge.id, edge.label ?? ''));
+      body.appendChild(this.deleteButton('この接続を削除'));
       this.root.replaceChildren(body);
       return;
     }
@@ -86,6 +93,20 @@ export class Inspector {
     p.className = 'insp-hint';
     p.textContent = text;
     return p;
+  }
+
+  private edgeLabelField(edgeId: string, value: string): HTMLElement {
+    const wrap = document.createElement('label');
+    wrap.className = 'insp-row';
+    const span = document.createElement('span');
+    span.textContent = 'ラベル';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = value;
+    input.placeholder = '例: events';
+    input.addEventListener('input', () => this.store.setEdgeLabel(edgeId, input.value));
+    wrap.append(span, input);
+    return wrap;
   }
 
   private labelField(node: DiagramNode): HTMLElement {
